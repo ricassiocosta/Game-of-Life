@@ -22,40 +22,25 @@ func ClearScreen() {
 	cmd.Run()
 }
 
+//IsAlive check if a given cell is alive
+func (matrix *Matrix) IsAlive(x, y int) bool {
+	return matrix.layer[(x+matrix.height)%matrix.height][(y+matrix.width)%matrix.width]
+}
+
 //countNeighbors returns total of cell neighbors
 func countNeighbors(matrix Matrix, line, column int) int {
 	neighbors := 0
 
-	if column > 0 {
-		if matrix.layer[line][column - 1] { neighbors++ }
-
-		if line > 0 {
-			if matrix.layer[line - 1][column - 1] { neighbors++ }
+	for dx := -1; dx <= 1; dx++ {
+		for dy := -1; dy <= 1; dy++ {
+			if dx == 0 && dy == 0 {
+				// don't count self
+				continue
+			}
+			if matrix.IsAlive(line+dx, column+dy) { 
+				neighbors++
+			}
 		}
-
-		if line < matrix.height - 1 {
-			if matrix.layer[line + 1][column - 1] { neighbors++ }
-		}
-	}
-
-	if column < matrix.width - 1 {
-		if matrix.layer[line][column + 1] { neighbors++ }
-
-		if line > 0 {
-			if matrix.layer[line - 1][column + 1] { neighbors++ }
-		}
-
-		if line < matrix.height - 1 {
-			if matrix.layer[line + 1][column + 1] { neighbors++ }
-		}
-	}
-
-	if line > 0 {
-		if matrix.layer[line - 1][column] { neighbors++ }
-	}
-
-	if line < matrix.height - 1 {
-		if matrix.layer[line + 1][column] { neighbors++ }
 	}
 
 	return neighbors
@@ -79,16 +64,15 @@ func NextGen(matrix Matrix) [][]bool {
 	for line := 0; line < matrix.height; line++ {
 		for column := 0; column < matrix.width; column++ {
 			neighbors := countNeighbors(matrix, line, column)
-			
-			if !matrix.layer[line][column] && neighbors == 3 { // dead cell //pass
-				newLayer[line][column] = true
-			} else if matrix.layer[line][column] { // living cell
-				if neighbors < 2 { // loneliness
+
+			if matrix.layer[line][column] {
+				if neighbors < 2 || neighbors > 3 { 
+					// loneliness || superpopulation
 					newLayer[line][column] = false
 				}
-	
-				if neighbors > 3 { // superpopulation
-					newLayer[line][column] = false
+			} else {
+				if neighbors == 3 {
+					newLayer[line][column] = true //revives
 				}
 			}
 		}
@@ -116,7 +100,7 @@ func (matrix *Matrix) String() string {
 }
 
 //Init2dLayer create the matrix and fill layer with random values
-func Init2dLayer(width, height int) [][]bool {
+func Init2dLayer(height, width int) [][]bool {
 	matrix := make([][]bool, height)
 	for i := range matrix {
 		matrix[i] = make([]bool, width)
@@ -133,20 +117,20 @@ func Init2dLayer(width, height int) [][]bool {
 //InitLayer define the matrix format
 func InitLayer(height, width int) *Matrix {
 	return &Matrix {
-		layer: Init2dLayer(width, height),
-		width: width,
+		layer: Init2dLayer(height, width),
 		height: height,
+		width: width,
 	}
 }
 
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
-	matrix := InitLayer(10, 40)
+	matrix := InitLayer(20, 80)
 
 	for i := 0; i < 100; i++ {
 		ClearScreen()
-		fmt.Print(matrix)
 		matrix.layer = NextGen(*matrix)
-		time.Sleep(time.Second/24)
+		fmt.Print(matrix)
+		time.Sleep(time.Second/10)
 	}
 }
