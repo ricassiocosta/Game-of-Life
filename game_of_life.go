@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"math/rand"
-	"time"
 	"os"
 	"os/exec"
+	"time"
 )
 
 //Matrix defines the structure
@@ -15,53 +15,50 @@ type Matrix struct {
 	width, height int
 }
 
+//ClearScreen when called
 func ClearScreen() { 
 	cmd := exec.Command("clear")
 	cmd.Stdout = os.Stdout
 	cmd.Run()
 }
 
-//IsAlive check if a given cell is alive
-// func (matrix *Matrix) IsAlive(x, y int) bool {
-// 	return matrix.layer[(x+matrix.width)%matrix.width][(y+matrix.height)%matrix.height]
-// }
+//countNeighbors returns total of cell neighbors
+func countNeighbors(matrix Matrix, line, column int) int {
+	neighbors := 0
 
-func countNeighbors(matrix Matrix, linha, coluna int) int {
-	count := 0
+	if column > 0 {
+		if matrix.layer[line][column - 1] { neighbors++ }
 
-	if coluna > 0 {
-		if matrix.layer[linha][coluna - 1] { count++ }
-
-		if linha > 0 {
-			if matrix.layer[linha - 1][coluna - 1] { count++ }
+		if line > 0 {
+			if matrix.layer[line - 1][column - 1] { neighbors++ }
 		}
 
-		if linha < matrix.height - 1 {
-			if matrix.layer[linha + 1][coluna - 1] { count++ }
+		if line < matrix.height - 1 {
+			if matrix.layer[line + 1][column - 1] { neighbors++ }
 		}
 	}
 
-	if coluna < matrix.width - 1 {
-		if matrix.layer[linha][coluna + 1] { count++ }
+	if column < matrix.width - 1 {
+		if matrix.layer[line][column + 1] { neighbors++ }
 
-		if linha > 0 {
-			if matrix.layer[linha - 1][coluna + 1] { count++ }
+		if line > 0 {
+			if matrix.layer[line - 1][column + 1] { neighbors++ }
 		}
 
-		if linha < matrix.height - 1 {
-			if matrix.layer[linha + 1][coluna + 1] { count++ }
+		if line < matrix.height - 1 {
+			if matrix.layer[line + 1][column + 1] { neighbors++ }
 		}
 	}
 
-	if linha > 0 {
-		if matrix.layer[linha - 1][coluna] { count++ }
+	if line > 0 {
+		if matrix.layer[line - 1][column] { neighbors++ }
 	}
 
-	if linha < matrix.height - 1 {
-		if matrix.layer[linha + 1][coluna] { count++ }
+	if line < matrix.height - 1 {
+		if matrix.layer[line + 1][column] { neighbors++ }
 	}
 
-	return count
+	return neighbors
 }
 
 func copyLayer(matrix Matrix) [][]bool {
@@ -79,19 +76,19 @@ func copyLayer(matrix Matrix) [][]bool {
 func NextGen(matrix Matrix) [][]bool {
 	newLayer := copyLayer(matrix)
 
-	for linha := 0; linha < matrix.height; linha++ {
-		for coluna := 0; coluna < matrix.width; coluna++ {
-			qtdNeighbors := countNeighbors(matrix, linha, coluna)
+	for line := 0; line < matrix.height; line++ {
+		for column := 0; column < matrix.width; column++ {
+			neighbors := countNeighbors(matrix, line, column)
 			
-			if !matrix.layer[linha][coluna] && qtdNeighbors == 3 { // dead cell //pass
-				newLayer[linha][coluna] = true
-			} else if matrix.layer[linha][coluna] { // living cell
-				if qtdNeighbors < 2 { // loneliness
-					newLayer[linha][coluna] = false
+			if !matrix.layer[line][column] && neighbors == 3 { // dead cell //pass
+				newLayer[line][column] = true
+			} else if matrix.layer[line][column] { // living cell
+				if neighbors < 2 { // loneliness
+					newLayer[line][column] = false
 				}
 	
-				if qtdNeighbors > 3 { // superpopulation
-					newLayer[linha][coluna] = false
+				if neighbors > 3 { // superpopulation
+					newLayer[line][column] = false
 				}
 			}
 		}
@@ -103,9 +100,9 @@ func NextGen(matrix Matrix) [][]bool {
 func (matrix *Matrix) String() string {
 	var buffer bytes.Buffer
 
-	for linha := 0; linha < matrix.height; linha++ {
-		for coluna := 0; coluna < matrix.width; coluna++ {
-			if matrix.layer[linha][coluna] {
+	for line := 0; line < matrix.height; line++ {
+		for column := 0; column < matrix.width; column++ {
+			if matrix.layer[line][column] {
 				buffer.WriteString("*")
 			} else {
 				buffer.WriteString(" ")
@@ -150,6 +147,6 @@ func main() {
 		ClearScreen()
 		fmt.Print(matrix)
 		matrix.layer = NextGen(*matrix)
-		time.Sleep(time.Second)
+		time.Sleep(time.Second/24)
 	}
 }
