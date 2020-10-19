@@ -5,12 +5,20 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+	"os"
+	"os/exec"
 )
 
 //Matrix defines the structure
 type Matrix struct {
 	layer [][]bool
 	width, height   int
+}
+
+func ClearScreen() { 
+	cmd := exec.Command("clear")
+	cmd.Stdout = os.Stdout
+	cmd.Run()
 }
 
 //IsAlive check if a given cell is alive
@@ -101,6 +109,7 @@ func main() {
 	for i := 0; i < 3600; i++ {
 		matrix.Populate()
 		fmt.Print(matrix)
-		time.Sleep(time.Second / 60)
+		time.Sleep(time.Second)
+		ClearScreen()
 	}
 }
