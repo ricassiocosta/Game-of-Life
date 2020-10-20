@@ -62,8 +62,9 @@ func copyLayer(matrix Matrix) [][]bool {
 }
 
 //NextGen generate the Game of Life's next generation of cells
-func NextGen(matrix Matrix) [][]bool {
+func NextGen(matrix Matrix) ([][]bool, bool) {
 	newLayer := copyLayer(matrix)
+	hasNextGen := false
 
 	for line := 0; line < matrix.height; line++ {
 		for column := 0; column < matrix.width; column++ {
@@ -73,16 +74,18 @@ func NextGen(matrix Matrix) [][]bool {
 				if neighbors < 2 || neighbors > 3 { 
 					// loneliness || superpopulation
 					newLayer[line][column] = false
+					hasNextGen = true
 				}
 			} else {
 				if neighbors == 3 {
 					newLayer[line][column] = true //revives
+					hasNextGen = true
 				}
 			}
 		}
 	}
 
-	return newLayer
+	return newLayer, hasNextGen
 }
 
 func (matrix *Matrix) String() string {
@@ -130,10 +133,11 @@ func InitLayer(height, width int) *Matrix {
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	matrix := InitLayer(20, 80)
+	hasNextGen := true
 
-	for i := 0; i < 100; i++ {
+	for hasNextGen {
 		ClearScreen()
-		matrix.layer = NextGen(*matrix)
+		matrix.layer, hasNextGen = NextGen(*matrix)
 		fmt.Print(matrix)
 		time.Sleep(time.Second/10)
 	}
