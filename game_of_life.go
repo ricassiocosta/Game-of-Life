@@ -24,7 +24,11 @@ func ClearScreen() {
 
 //IsAlive check if a given cell is alive
 func (matrix *Matrix) IsAlive(x, y int) bool {
-	return matrix.layer[(x+matrix.height)%matrix.height][(y+matrix.width)%matrix.width]
+	if x < 0 || y < 0 || x == matrix.height || y == matrix.width { 
+		// return false if cell is out of matrix
+		return false
+	}
+	return matrix.layer[x][y]
 }
 
 //countNeighbors returns total of cell neighbors
@@ -106,7 +110,7 @@ func Init2dLayer(height, width int) [][]bool {
 		matrix[i] = make([]bool, width)
 	}
 
-	n := (width * height) / 2
+	n	 := (width * height) / 2
 	for i := 0; i < n; i++ {
 		matrix[rand.Intn(height)][rand.Intn(width)] = true
 	}
