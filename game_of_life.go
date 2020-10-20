@@ -15,13 +15,6 @@ type Matrix struct {
 	width, height int
 }
 
-//ClearScreen when called
-func ClearScreen() { 
-	cmd := exec.Command("clear")
-	cmd.Stdout = os.Stdout
-	cmd.Run()
-}
-
 //IsAlive check if a given cell is alive
 func (matrix *Matrix) IsAlive(x, y int) bool {
 	if x < 0 || y < 0 || x == matrix.height || y == matrix.width { 
@@ -31,8 +24,8 @@ func (matrix *Matrix) IsAlive(x, y int) bool {
 	return matrix.layer[x][y]
 }
 
-//countNeighbors returns total of cell neighbors
-func countNeighbors(matrix Matrix, line, column int) int {
+//CountNeighbors returns total of cell neighbors
+func (matrix *Matrix) CountNeighbors(line, column int) int {
 	neighbors := 0
 
 	for dx := -1; dx <= 1; dx++ {
@@ -50,25 +43,14 @@ func countNeighbors(matrix Matrix, line, column int) int {
 	return neighbors
 }
 
-func copyLayer(matrix Matrix) [][]bool {
-	newLayer := make([][]bool, len(matrix.layer))
-	
-	for i := range matrix.layer {
-    newLayer[i] = make([]bool, len(matrix.layer[i]))
-    copy(newLayer[i], matrix.layer[i])
-	}
-
-	return newLayer
-}
-
 //NextGen generate the Game of Life's next generation of cells
-func NextGen(matrix Matrix) ([][]bool, bool) {
+func (matrix *Matrix) NextGen() bool {
 	newLayer := copyLayer(matrix)
-	hasNextGen := false
+	var hasNextGen bool
 
 	for line := 0; line < matrix.height; line++ {
 		for column := 0; column < matrix.width; column++ {
-			neighbors := countNeighbors(matrix, line, column)
+			neighbors := matrix.CountNeighbors(line, column)
 
 			if matrix.layer[line][column] {
 				if neighbors < 2 || neighbors > 3 { 
@@ -85,7 +67,9 @@ func NextGen(matrix Matrix) ([][]bool, bool) {
 		}
 	}
 
-	return newLayer, hasNextGen
+	matrix.layer = newLayer
+
+	return hasNextGen
 }
 
 func (matrix *Matrix) String() string {
@@ -104,6 +88,24 @@ func (matrix *Matrix) String() string {
 	}
 
 	return buffer.String()
+}
+
+//ClearScreen when called
+func ClearScreen() { 
+	cmd := exec.Command("clear")
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+}
+
+func copyLayer(matrix *Matrix) [][]bool {
+	newLayer := make([][]bool, len(matrix.layer))
+	
+	for i := range matrix.layer {
+    newLayer[i] = make([]bool, len(matrix.layer[i]))
+    copy(newLayer[i], matrix.layer[i])
+	}
+
+	return newLayer
 }
 
 //Init2dLayer create the matrix and fill layer with random values
@@ -137,7 +139,7 @@ func main() {
 
 	for hasNextGen {
 		ClearScreen()
-		matrix.layer, hasNextGen = NextGen(*matrix)
+	 	hasNextGen = matrix.NextGen()
 		fmt.Print(matrix)
 		time.Sleep(time.Second/10)
 	}
