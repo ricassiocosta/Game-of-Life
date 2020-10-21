@@ -51,7 +51,7 @@ func (matrix *Matrix) CountNeighbors(line, column int) int {
 //NextGen generate the Game of Life's next generation of cells
 func (matrix *Matrix) NextGen() (*Matrix, bool) {
 	channel := make(chan int)
-	newLayer := initEmptyLayer(matrix)
+	newLayer := copyLayer(matrix)
 	var hasNextGen bool
 
 	for line := 0; line < matrix.height; line++ {
@@ -114,7 +114,7 @@ func ClearScreen() {
 	cmd.Run()
 }
 
-func initEmptyLayer(matrix *Matrix) [][]bool {
+func copyLayer(matrix *Matrix) [][]bool {
 	newLayer := make([][]bool, len(matrix.layer))
 	
 	for i := range matrix.layer {
@@ -165,6 +165,7 @@ func main() {
 		
 		signals <- os.Interrupt
 	}()
+
 
 	<-signals
 	fmt.Println("Exiting...")
