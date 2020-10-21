@@ -49,32 +49,44 @@ func (matrix *Matrix) CountNeighbors(line, column int) int {
 }
 
 //NextGen generate the Game of Life's next generation of cells
-func (matrix *Matrix) NextGen() bool {
-	newLayer := copyLayer(matrix)
+func (matrix *Matrix) NextGen() (*Matrix, bool) {
+	channel := make(chan int)
+	newLayer := initEmptyLayer(matrix)
 	var hasNextGen bool
 
 	for line := 0; line < matrix.height; line++ {
-		for column := 0; column < matrix.width; column++ {
-			neighbors := matrix.CountNeighbors(line, column)
-
-			if matrix.layer[line][column] {
-				if neighbors < 2 || neighbors > 3 { 
-					// loneliness || superpopulation
-					newLayer[line][column] = false
-					hasNextGen = true
-				}
-			} else {
-				if neighbors == 3 {
-					newLayer[line][column] = true //revives
-					hasNextGen = true
+		go func(line int) {
+			for column := 0; column < matrix.width; column++ {
+				neighbors := matrix.CountNeighbors(line, column)
+	
+				if matrix.layer[line][column] {
+					if neighbors < 2 || neighbors > 3 { 
+						// loneliness || superpopulation
+						newLayer[line][column] = false
+						hasNextGen = true
+					}
+				} else {
+					if neighbors == 3 {
+						newLayer[line][column] = true //revives
+						hasNextGen = true
+					}
 				}
 			}
-		}
+			channel <- 1
+		}(line)
 	}
 
-	matrix.layer = newLayer
+	for num := 0; num < matrix.height; num ++ {
+		<- channel
+	} 
 
-	return hasNextGen
+	newMatrix := &Matrix {
+		layer: newLayer,
+		height: matrix.height,
+		width: matrix.width,
+	}
+
+	return newMatrix, hasNextGen
 }
 
 func (matrix *Matrix) String() string {
@@ -102,7 +114,7 @@ func ClearScreen() {
 	cmd.Run()
 }
 
-func copyLayer(matrix *Matrix) [][]bool {
+func initEmptyLayer(matrix *Matrix) [][]bool {
 	newLayer := make([][]bool, len(matrix.layer))
 	
 	for i := range matrix.layer {
@@ -146,8 +158,8 @@ func main() {
 	go func() {
 		for hasNextGen := true; hasNextGen; {
 			ClearScreen()
-			hasNextGen = matrix.NextGen()
-			fmt.Print(matrix)
+			matrix, hasNextGen = matrix.NextGen()
+			go fmt.Print(matrix)
 			time.Sleep(time.Second/10)
 		}
 		
