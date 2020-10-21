@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"os/signal"
 	"time"
 )
 
@@ -13,6 +14,10 @@ import (
 type Matrix struct {
 	layer [][]bool
 	width, height int
+}
+
+func init(){
+	rand.Seed(time.Now().UTC().UnixNano())
 }
 
 //IsAlive check if a given cell is alive
@@ -133,14 +138,22 @@ func InitLayer(height, width int) *Matrix {
 }
 
 func main() {
-	rand.Seed(time.Now().UTC().UnixNano())
 	matrix := InitLayer(20, 80)
-	hasNextGen := true
+	signals := make(chan os.Signal, 1)
 
-	for hasNextGen {
-		ClearScreen()
-	 	hasNextGen = matrix.NextGen()
-		fmt.Print(matrix)
-		time.Sleep(time.Second/10)
-	}
+	signal.Notify(signals, os.Interrupt)
+
+	go func() {
+		for hasNextGen := true; hasNextGen; {
+			ClearScreen()
+			hasNextGen = matrix.NextGen()
+			fmt.Print(matrix)
+			time.Sleep(time.Second/10)
+		}
+		
+		signals <- os.Interrupt
+	}()
+
+	<-signals
+	fmt.Println("Exiting...")
 }
