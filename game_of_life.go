@@ -12,17 +12,17 @@ import (
 
 //Matrix defines the structure
 type Matrix struct {
-	layer [][]bool
+	layer         [][]bool
 	width, height int
 }
 
-func init(){
+func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
 //IsAlive check if a given cell is alive
 func (matrix *Matrix) IsAlive(x, y int) bool {
-	if x < 0 || y < 0 || x == matrix.height || y == matrix.width { 
+	if x < 0 || y < 0 || x == matrix.height || y == matrix.width {
 		// return false if cell is out of matrix
 		return false
 	}
@@ -39,7 +39,7 @@ func (matrix *Matrix) CountNeighbors(line, column int) int {
 				// don't count self
 				continue
 			}
-			if matrix.IsAlive(line+dx, column+dy) { 
+			if matrix.IsAlive(line+dx, column+dy) {
 				neighbors++
 			}
 		}
@@ -51,39 +51,37 @@ func (matrix *Matrix) CountNeighbors(line, column int) int {
 //NextGen generate the Game of Life's next generation of cells
 func (matrix *Matrix) NextGen() (*Matrix, bool) {
 	channel := make(chan int)
-	newLayer := copyLayer(matrix)
+	newLayer := initEmptyLayer(matrix.height, matrix.width)
 	var hasNextGen bool
 
 	for line := 0; line < matrix.height; line++ {
 		go func(line int) {
 			for column := 0; column < matrix.width; column++ {
 				neighbors := matrix.CountNeighbors(line, column)
-	
-				if matrix.layer[line][column] {
-					if neighbors < 2 || neighbors > 3 { 
-						// loneliness || superpopulation
-						newLayer[line][column] = false
-						hasNextGen = true
-					}
+
+				if !matrix.layer[line][column] && neighbors == 3 { // revives
+					newLayer[line][column] = true
+					hasNextGen = true
+				} else if matrix.layer[line][column] && (neighbors < 2 || neighbors > 3) { // loneliness || superpopulation
+					newLayer[line][column] = false
+					hasNextGen = true
 				} else {
-					if neighbors == 3 {
-						newLayer[line][column] = true //revives
-						hasNextGen = true
-					}
+					newLayer[line][column] = matrix.layer[line][column]
 				}
 			}
+
 			channel <- 1
 		}(line)
 	}
 
-	for num := 0; num < matrix.height; num ++ {
-		<- channel
-	} 
+	for num := 0; num < matrix.height; num++ {
+		<-channel
+	}
 
-	newMatrix := &Matrix {
-		layer: newLayer,
+	newMatrix := &Matrix{
+		layer:  newLayer,
 		height: matrix.height,
-		width: matrix.width,
+		width:  matrix.width,
 	}
 
 	return newMatrix, hasNextGen
@@ -108,18 +106,17 @@ func (matrix *Matrix) String() string {
 }
 
 //ClearScreen when called
-func ClearScreen() { 
+func ClearScreen() {
 	cmd := exec.Command("clear")
 	cmd.Stdout = os.Stdout
 	cmd.Run()
 }
 
-func copyLayer(matrix *Matrix) [][]bool {
-	newLayer := make([][]bool, len(matrix.layer))
-	
-	for i := range matrix.layer {
-    newLayer[i] = make([]bool, len(matrix.layer[i]))
-    copy(newLayer[i], matrix.layer[i])
+func initEmptyLayer(height, width int) [][]bool {
+	newLayer := make([][]bool, height)
+
+	for i := 0; i < height; i++ {
+		newLayer[i] = make([]bool, width)
 	}
 
 	return newLayer
@@ -132,7 +129,7 @@ func Init2dLayer(height, width int) [][]bool {
 		matrix[i] = make([]bool, width)
 	}
 
-	n	 := (width * height) / 2
+	n := (width * height) / 2
 	for i := 0; i < n; i++ {
 		matrix[rand.Intn(height)][rand.Intn(width)] = true
 	}
@@ -142,10 +139,10 @@ func Init2dLayer(height, width int) [][]bool {
 
 //InitLayer define the matrix format
 func InitLayer(height, width int) *Matrix {
-	return &Matrix {
-		layer: Init2dLayer(height, width),
+	return &Matrix{
+		layer:  Init2dLayer(height, width),
 		height: height,
-		width: width,
+		width:  width,
 	}
 }
 
@@ -160,12 +157,11 @@ func main() {
 			ClearScreen()
 			matrix, hasNextGen = matrix.NextGen()
 			go fmt.Print(matrix)
-			time.Sleep(time.Second/10)
+			time.Sleep(time.Second / 10)
 		}
-		
+
 		signals <- os.Interrupt
 	}()
-
 
 	<-signals
 	fmt.Println("Exiting...")
