@@ -1,4 +1,4 @@
-![Game_of_Life](https://drive.google.com/uc?export=view&id=1WlYPR1MwmfAAQXXhZxs7x8Z0IppzgWRg)
+![Game_of_Life](./.github/game_of_life.gif)
 
 # Game of Life
 
